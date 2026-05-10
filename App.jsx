@@ -20,9 +20,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "./firebase.js";
 import { stripePromise } from "./stripe.js";
-import { ContactPage, HelpPage, Footer } from "./ContactHelp.jsx";
 
-// ─── STYLES ──────────────────────────────────────────────────────────────────
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,42 +35,19 @@ const css = `
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--cream); }
   ::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 3px; }
-  .toast {
-    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-    background: var(--bark); color: var(--cream); padding: 14px 28px;
-    border-radius: 4px; font-size: 0.88rem; z-index: 9999;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    animation: toastIn 0.3s ease;
-  }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--bark); color: var(--cream); padding: 14px 28px; border-radius: 4px; font-size: 0.88rem; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: toastIn 0.3s ease; }
   .toast.success { background: var(--green); }
   .toast.error { background: var(--red); }
   @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(16px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
-  .overlay {
-    position: fixed; inset: 0; background: rgba(59,46,34,0.55);
-    backdrop-filter: blur(4px); z-index: 500;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-    animation: fadeIn 0.2s ease;
-  }
+  .overlay { position: fixed; inset: 0; background: rgba(59,46,34,0.55); backdrop-filter: blur(4px); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-  .modal {
-    background: var(--warm); border-radius: 8px;
-    padding: 40px; width: 100%; max-width: 460px;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
-    animation: slideUp 0.3s ease;
-    max-height: 90vh; overflow-y: auto;
-  }
+  .modal { background: var(--warm); border-radius: 8px; padding: 40px; width: 100%; max-width: 460px; box-shadow: 0 24px 80px rgba(0,0,0,0.25); animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
   .modal-wide { max-width: 680px; }
   @keyframes slideUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
-  .nav {
-    position: sticky; top: 0; z-index: 200;
-    background: rgba(250,247,242,0.92); backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(201,168,76,0.2);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 5%; height: 68px;
-  }
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(250,247,242,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(201,168,76,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 5%; height: 68px; }
   .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; background: none; border: none; cursor: pointer; }
   .nav-logo span { color: var(--terra); }
-  .nav-actions { display: flex; gap: 12px; align-items: center; }
+  .nav-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .nav-tab { background: none; border: none; padding: 8px 16px; font-size: 0.82rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--stone); border-radius: 2px; transition: all 0.2s; }
   .nav-tab:hover, .nav-tab.active { color: var(--bark); background: var(--cream); }
   .nav-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--moss), var(--terra)); color: #fff; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; border: none; }
@@ -81,13 +56,10 @@ const css = `
   .btn-primary:hover { background: var(--bark); transform: translateY(-1px); }
   .btn-secondary { background: var(--cream); color: var(--bark); border: 1px solid var(--sand); }
   .btn-secondary:hover { background: var(--sand); }
-  .btn-ghost { background: transparent; color: var(--terra); border: 1.5px solid var(--terra); }
-  .btn-ghost:hover { background: var(--terra); color: #fff; }
   .btn-sm { padding: 8px 18px; font-size: 0.75rem; }
   .btn-lg { padding: 16px 40px; font-size: 0.88rem; }
   .btn-block { width: 100%; }
   .btn-danger { background: var(--red); color: #fff; }
-  .btn-success { background: var(--green); color: #fff; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
   .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
   .form-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--terra); }
@@ -98,9 +70,6 @@ const css = `
   select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7f72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; background-color: #fff; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .form-hint { font-size: 0.78rem; color: var(--stone); margin-top: 2px; }
-  .input-group { position: relative; }
-  .input-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--stone); font-size: 0.9rem; pointer-events: none; }
-  .input-prefix + .form-input { padding-left: 28px; }
   .card { background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 16px var(--shadow); transition: transform 0.3s, box-shadow 0.3s; }
   .card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px var(--shadow); }
   .card-img { height: 200px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; overflow: hidden; }
@@ -108,18 +77,15 @@ const css = `
   .card-footer-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--sand); margin-top: 12px; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
   .badge-gold { background: var(--gold); color: var(--bark); }
-  .badge-terra { background: var(--terra); color: #fff; }
-  .badge-moss { background: var(--moss); color: #fff; }
-  .badge-cream { background: var(--cream); color: var(--stone); }
   .badge-green { background: var(--green); color: #fff; }
   .badge-red { background: var(--red); color: #fff; }
+  .badge-cream { background: var(--cream); color: var(--stone); }
   .section { padding: 64px 5%; }
   .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--terra); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
   .section-label::before { content: ''; display: block; width: 20px; height: 1.5px; background: var(--terra); }
   .serif { font-family: 'Cormorant Garamond', serif; }
   .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .flex-row { display: flex; align-items: center; gap: 12px; }
   .flex-between { display: flex; align-items: center; justify-content: space-between; }
   .stars { color: var(--gold); letter-spacing: 2px; }
   .tag { display: inline-block; padding: 4px 10px; background: var(--cream); color: var(--stone); font-size: 0.72rem; border-radius: 2px; }
@@ -179,6 +145,8 @@ const css = `
   .error-msg { background: rgba(224,80,80,0.1); border: 1px solid var(--red); color: var(--red); padding: 10px 14px; border-radius: 3px; font-size: 0.85rem; margin-bottom: 16px; }
   .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 80px 20px; background: #fff; border-radius: 6px; border: 2px dashed var(--sand); }
+  .empty-state .icon { font-size: 4rem; margin-bottom: 20px; }
   @media (max-width: 768px) {
     .detail-grid { grid-template-columns: 1fr; }
     .booking-panel { position: static; }
@@ -188,20 +156,11 @@ const css = `
     .search-field { border-right: none; border-bottom: 1px solid var(--sand); }
     .search-submit { padding: 14px; }
     .stat-row { gap: 24px; }
+    .nav-actions { gap: 6px; }
+    .nav-tab { padding: 6px 10px; font-size: 0.75rem; }
   }
 `;
 
-// ─── SAMPLE SPACES DATA ───────────────────────────────────────────────────────
-const SAMPLE_SPACES = [
-  { id: "s1", title: "The Sundown Garden", hostName: "Maria L.", location: "Austin, TX", type: "Backyard", guests: 80, price: 350, rating: 4.97, reviews: 63, bg: "bg-yard", emoji: "🌿", amenities: ["Parking","Fire pit","Tables & chairs","String lights","Outdoor kitchen"], description: "A sprawling half-acre backyard with mature live oaks, a fire pit, and string lights already installed. The perfect backdrop for intimate celebrations.", events: ["Birthday","Baby Shower","Graduation"], booked: ["2025-08-10","2025-08-17"] },
-  { id: "s2", title: "Hickory Hollow Barn", hostName: "James T.", location: "Nashville, TN", type: "Barn", guests: 200, price: 750, rating: 4.88, reviews: 21, bg: "bg-barn", emoji: "🏚", amenities: ["Large parking","Indoor + Outdoor","Bridal suite","Commercial kitchen","PA system"], description: "A beautifully restored 1940s barn sitting on 5 acres. Climate-controlled inside with rustic wooden beams and a wraparound porch.", events: ["Wedding","Corporate","Birthday"], booked: ["2025-08-03","2025-08-04"] },
-  { id: "s3", title: "Lakeside Pine Estate", hostName: "Christine P.", location: "Lake Tahoe, CA", type: "Private Land", guests: 120, price: 1200, rating: 5.0, reviews: 44, bg: "bg-lake", emoji: "🌊", amenities: ["Private dock","Waterfront","Catering kitchen","Fire pit","Parking for 40"], description: "Exclusive lakeside property with 200 feet of private shoreline. Stunning mountain views with a dock, fire pit, and full catering kitchen.", events: ["Wedding","Birthday","Corporate"], booked: ["2025-08-15","2025-08-16"] },
-  { id: "s4", title: "Magnolia Side Garden", hostName: "Dolores R.", location: "Savannah, GA", type: "Garden", guests: 50, price: 280, rating: 4.95, reviews: 87, bg: "bg-garden", emoji: "🌸", amenities: ["String lights","Bistro tables","Garden fountain","Parking","Restrooms"], description: "A romantic Southern garden overflowing with magnolias, gardenias, and jasmine. Includes bistro tables, string lights, and a vintage garden fountain.", events: ["Baby Shower","Birthday","Bridal Shower"], booked: ["2025-08-08"] },
-  { id: "s5", title: "Desert Ridge Ranch", hostName: "Carlos M.", location: "Scottsdale, AZ", type: "Ranch", guests: 150, price: 900, rating: 4.91, reviews: 38, bg: "bg-ranch", emoji: "🐎", amenities: ["Desert views","Sunset patio","Tables & chairs","Parking","Fire pit"], description: "A working ranch with jaw-dropping desert sunset views. Perfect for western-themed events with a large covered patio and mesquite fire pit.", events: ["Wedding","Birthday","Corporate"], booked: [] },
-  { id: "s6", title: "Indigo Grove Estate", hostName: "Patricia K.", location: "Charleston, SC", type: "Estate", guests: 250, price: 1800, rating: 4.98, reviews: 52, bg: "bg-estate", emoji: "✨", amenities: ["Catering kitchen","Bridal suite","Pool","Valet parking","Sound system","AC"], description: "A stunning antebellum estate with manicured grounds, a pool, and a full catering kitchen. The most luxurious private venue in the Lowcountry.", events: ["Wedding","Corporate","Gala"], booked: ["2025-08-20","2025-08-21"] },
-];
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -223,7 +182,6 @@ function StarRating({ rating, size = "1rem" }) {
   return <span className="stars" style={{ fontSize: size }}>{"★".repeat(Math.floor(rating))}{rating % 1 >= 0.5 ? "½" : ""}</span>;
 }
 
-// ─── CALENDAR ────────────────────────────────────────────────────────────────
 function Calendar({ bookedDates = [], onSelect, checkIn, checkOut }) {
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth());
@@ -255,9 +213,8 @@ function Calendar({ bookedDates = [], onSelect, checkIn, checkOut }) {
   );
 }
 
-// ─── AUTH MODAL ──────────────────────────────────────────────────────────────
 function AuthModal({ onClose, onAuth, showToast }) {
-  const [mode, setMode] = useState("login"); // login | signup
+  const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -272,32 +229,20 @@ function AuthModal({ onClose, onAuth, showToast }) {
         if (!name.trim()) { setError("Please enter your name."); setLoading(false); return; }
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: name.trim() });
-        // Save user profile to Firestore
-        await addDoc(collection(db, "users"), {
-          uid: cred.user.uid, name: name.trim(), email, role,
-          createdAt: serverTimestamp()
-        });
+        await addDoc(collection(db, "users"), { uid: cred.user.uid, name: name.trim(), email, role, createdAt: serverTimestamp() });
         onAuth({ uid: cred.user.uid, name: name.trim(), email, role });
         showToast(`Welcome to Yard Events, ${name.trim()}! 🎉`, "success");
       } else {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        // Get role from Firestore
         const q = query(collection(db, "users"), where("uid","==",cred.user.uid));
         const snap = await getDocs(q);
         const userData = snap.empty ? { role: "guest" } : snap.docs[0].data();
-        onAuth({ uid: cred.user.uid, name: cred.user.displayName || email, email, role: userData.role });
+        onAuth({ uid: cred.user.uid, name: cred.user.displayName || email, email, role: userData.role || "guest" });
         showToast(`Welcome back! 👋`, "success");
       }
       onClose();
     } catch (e) {
-      const msgs = {
-        "auth/email-already-in-use": "An account with this email already exists.",
-        "auth/weak-password": "Password must be at least 6 characters.",
-        "auth/invalid-email": "Please enter a valid email address.",
-        "auth/user-not-found": "No account found with this email.",
-        "auth/wrong-password": "Incorrect password. Please try again.",
-        "auth/invalid-credential": "Incorrect email or password.",
-      };
+      const msgs = { "auth/email-already-in-use": "An account with this email already exists.", "auth/weak-password": "Password must be at least 6 characters.", "auth/invalid-email": "Please enter a valid email address.", "auth/user-not-found": "No account found with this email.", "auth/wrong-password": "Incorrect password.", "auth/invalid-credential": "Incorrect email or password." };
       setError(msgs[e.code] || "Something went wrong. Please try again.");
     }
     setLoading(false);
@@ -317,16 +262,16 @@ function AuthModal({ onClose, onAuth, showToast }) {
         {mode==="signup" && (
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input className="form-input" placeholder="Your full name" value={name} onChange={e=>setName(e.target.value)} />
+            <input className="form-input" placeholder="Your full name" value={name} onChange={e=>setName(e.target.value)}/>
           </div>
         )}
         <div className="form-group">
           <label className="form-label">Email Address</label>
-          <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} />
+          <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/>
         </div>
         <div className="form-group">
           <label className="form-label">Password</label>
-          <input className="form-input" type="password" placeholder={mode==="signup"?"At least 6 characters":"Your password"} value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} />
+          <input className="form-input" type="password" placeholder={mode==="signup"?"At least 6 characters":"Your password"} value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
         </div>
         {mode==="signup" && (
           <div className="form-group">
@@ -355,12 +300,11 @@ function AuthModal({ onClose, onAuth, showToast }) {
   );
 }
 
-// ─── SPACE CARD ──────────────────────────────────────────────────────────────
 function SpaceCard({ space, onClick, onFav, isFaved }) {
   return (
     <div className="card" style={{cursor:"pointer"}} onClick={()=>onClick(space)}>
-      <div className={`card-img ${space.bg}`}>
-        <span style={{position:"relative",zIndex:1}}>{space.emoji}</span>
+      <div className={`card-img ${space.bg||"bg-yard"}`}>
+        <span style={{position:"relative",zIndex:1}}>{space.emoji||"🏡"}</span>
         <div style={{position:"absolute",top:12,left:12}}><span className="badge badge-gold">{space.type}</span></div>
         <button style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:"1rem",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}} onClick={e=>{e.stopPropagation();onFav(space.id);}}>
           {isFaved?"❤️":"🤍"}
@@ -371,20 +315,17 @@ function SpaceCard({ space, onClick, onFav, isFaved }) {
         <h3 className="serif" style={{marginBottom:8,fontSize:"1.2rem"}}>{space.title}</h3>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
           <span className="tag">Up to {space.guests} guests</span>
-          {space.events.slice(0,2).map(e=><span key={e} className="tag">{e}</span>)}
+          {(space.events||[]).slice(0,2).map(e=><span key={e} className="tag">{e}</span>)}
         </div>
         <div className="card-footer-row">
           <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.3rem",fontWeight:300}}>{fmt(space.price)} <span style={{fontFamily:"DM Sans,sans-serif",fontSize:"0.75rem",color:"var(--stone)"}}>/ day</span></div>
-          <div style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",color:"var(--stone)"}}>
-            <StarRating rating={space.rating} size="0.8rem"/> {space.rating} ({space.reviews})
-          </div>
+          {space.rating>0 && <div style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",color:"var(--stone)"}}><StarRating rating={space.rating} size="0.8rem"/> {space.rating} ({space.reviews||0})</div>}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── PAYMENT MODAL ───────────────────────────────────────────────────────────
 function PaymentModal({ booking, space, user, onClose, onSuccess, showToast }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -399,23 +340,19 @@ function PaymentModal({ booking, space, user, onClose, onSuccess, showToast }) {
   const pay = async () => {
     setLoading(true);
     try {
-      // Save booking to Firestore
-      const bookingRef = await addDoc(collection(db, "bookings"), {
+      const ref = `EVR-${Date.now().toString().slice(-6)}`;
+      await addDoc(collection(db, "bookings"), {
         userId: user.uid, userName: user.name, userEmail: user.email,
         spaceId: space.id, spaceTitle: space.title, spaceLocation: space.location,
-        hostName: space.hostName, checkIn: booking.checkIn, checkOut: booking.checkOut,
-        guests: booking.guests, total, subtotal, serviceFee,
-        status: "confirmed", createdAt: serverTimestamp(),
-        bookingRef: `EVR-${Date.now().toString().slice(-6)}`
+        hostId: space.hostId||"", hostName: space.hostName||"", checkIn: booking.checkIn,
+        checkOut: booking.checkOut, guests: booking.guests, total, subtotal, serviceFee,
+        status: "confirmed", createdAt: serverTimestamp(), bookingRef: ref
       });
       await sleep(1000);
       setLoading(false);
       setStep(3);
-      onSuccess({ id: bookingRef.id, space, booking, total, ref: `EVR-${Date.now().toString().slice(-6)}` });
-    } catch(e) {
-      showToast("Payment failed. Please try again.", "error");
-      setLoading(false);
-    }
+      onSuccess({ space, booking, total, ref });
+    } catch(e) { showToast("Payment failed. Please try again.", "error"); setLoading(false); }
   };
 
   return (
@@ -443,7 +380,7 @@ function PaymentModal({ booking, space, user, onClose, onSuccess, showToast }) {
         {step===1&&(
           <>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}}>
-              <div className={`${space.bg} card-img`} style={{height:160,borderRadius:6,fontSize:"3rem"}}>{space.emoji}</div>
+              <div className={`${space.bg||"bg-yard"} card-img`} style={{height:160,borderRadius:6,fontSize:"3rem"}}>{space.emoji||"🏡"}</div>
               <div>
                 <h3 className="serif" style={{fontSize:"1.2rem",marginBottom:6}}>{space.title}</h3>
                 <div style={{fontSize:"0.82rem",color:"var(--stone)",marginBottom:10}}>📍 {space.location}</div>
@@ -476,8 +413,7 @@ function PaymentModal({ booking, space, user, onClose, onSuccess, showToast }) {
             </div>
             <div className="form-group">
               <label className="form-label">Card Number</label>
-              <input className="form-input" placeholder="4242 4242 4242 4242" value={card.number} onChange={e=>setCard(c=>({...c,number:fmtCard(e.target.value)}))} maxLength={19}/>
-              <span className="form-hint">Use test card: 4242 4242 4242 4242 (any future date, any CVC)</span>
+              <input className="form-input" placeholder="1234 5678 9012 3456" value={card.number} onChange={e=>setCard(c=>({...c,number:fmtCard(e.target.value)}))} maxLength={19}/>
             </div>
             <div className="form-row">
               <div className="form-group">
@@ -525,27 +461,23 @@ function PaymentModal({ booking, space, user, onClose, onSuccess, showToast }) {
   );
 }
 
-// ─── SPACE DETAIL ─────────────────────────────────────────────────────────────
 function SpaceDetail({ space, user, onBack, onBook, showAuth }) {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(2);
   const [calSelect, setCalSelect] = useState("checkin");
-
   const nights = checkIn&&checkOut ? Math.max(1,Math.round((new Date(checkOut)-new Date(checkIn))/86400000)) : 1;
   const subtotal = space.price * nights;
   const serviceFee = Math.round(subtotal*0.12);
-
   const handleCalSelect = (date) => {
     if (calSelect==="checkin"||!checkIn) { setCheckIn(date); setCheckOut(""); setCalSelect("checkout"); }
     else { if(date<=checkIn){setCheckIn(date);setCheckOut("");setCalSelect("checkout");}else{setCheckOut(date);setCalSelect("checkin");} }
   };
-
   return (
     <div>
       <button onClick={onBack} className="btn btn-secondary btn-sm" style={{marginBottom:20}}>← Back to Listings</button>
-      <div className={`detail-hero ${space.bg}`} style={{marginBottom:32}}>
-        <span style={{fontSize:"7rem"}}>{space.emoji}</span>
+      <div className={`detail-hero ${space.bg||"bg-yard"}`} style={{marginBottom:32}}>
+        <span style={{fontSize:"7rem"}}>{space.emoji||"🏡"}</span>
         <div style={{position:"absolute",bottom:20,left:20,display:"flex",gap:8}}>
           <span className="badge badge-gold">{space.type}</span>
           <span className="badge badge-cream">Up to {space.guests} guests</span>
@@ -557,38 +489,20 @@ function SpaceDetail({ space, user, onBack, onBook, showAuth }) {
             <div style={{fontSize:"0.78rem",color:"var(--stone)",marginBottom:6,letterSpacing:"0.06em",textTransform:"uppercase"}}>📍 {space.location}</div>
             <h1 className="serif" style={{fontSize:"clamp(2rem,4vw,3rem)",fontWeight:300,marginBottom:8}}>{space.title}</h1>
             <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6}}><StarRating rating={space.rating}/> <span style={{fontWeight:600}}>{space.rating}</span> <span style={{color:"var(--stone)"}}>({space.reviews} reviews)</span></div>
-              <span style={{color:"var(--sand)"}}>·</span>
+              {space.rating>0&&<div style={{display:"flex",alignItems:"center",gap:6}}><StarRating rating={space.rating}/> <span style={{fontWeight:600}}>{space.rating}</span> <span style={{color:"var(--stone)"}}>({space.reviews||0} reviews)</span></div>}
               <span style={{color:"var(--stone)",fontSize:"0.88rem"}}>Hosted by {space.hostName}</span>
             </div>
           </div>
           <hr className="divider"/>
-          <div style={{marginBottom:28}}>
-            <h3 className="serif" style={{fontSize:"1.3rem",marginBottom:14}}>About this space</h3>
-            <p style={{lineHeight:1.75,color:"var(--stone)"}}>{space.description}</p>
-          </div>
-          <div style={{marginBottom:28}}>
-            <h3 className="serif" style={{fontSize:"1.3rem",marginBottom:14}}>Amenities & Features</h3>
-            <div className="amenity-grid">{space.amenities.map(a=><div key={a} className="amenity">✓ {a}</div>)}</div>
-          </div>
-          <div style={{marginBottom:28}}>
-            <h3 className="serif" style={{fontSize:"1.3rem",marginBottom:14}}>Perfect for</h3>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{space.events.map(e=><span key={e} className="badge badge-cream" style={{fontSize:"0.82rem",padding:"6px 14px"}}>{e}</span>)}</div>
-          </div>
+          {space.description&&<div style={{marginBottom:28}}><h3 className="serif" style={{fontSize:"1.3rem",marginBottom:14}}>About this space</h3><p style={{lineHeight:1.75,color:"var(--stone)"}}>{space.description}</p></div>}
+          {space.amenities&&space.amenities.length>0&&<div style={{marginBottom:28}}><h3 className="serif" style={{fontSize:"1.3rem",marginBottom:14}}>Amenities</h3><div className="amenity-grid">{space.amenities.map(a=><div key={a} className="amenity">✓ {a}</div>)}</div></div>}
+          {space.events&&space.events.length>0&&<div style={{marginBottom:28}}><h3 className="serif" style={{fontSize:"1.3rem",marginBottom:14}}>Perfect for</h3><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{space.events.map(e=><span key={e} className="badge badge-cream" style={{fontSize:"0.82rem",padding:"6px 14px"}}>{e}</span>)}</div></div>}
           <hr className="divider"/>
-          <div>
-            <h3 className="serif" style={{fontSize:"1.3rem",marginBottom:16}}>Select Your Date</h3>
-            <p style={{fontSize:"0.82rem",color:"var(--stone)",marginBottom:14}}>Click to select your event date. Greyed out dates are unavailable.</p>
-            <Calendar bookedDates={space.booked} onSelect={handleCalSelect} checkIn={checkIn} checkOut={checkOut}/>
-          </div>
+          <div><h3 className="serif" style={{fontSize:"1.3rem",marginBottom:16}}>Select Your Date</h3><Calendar bookedDates={space.booked||[]} onSelect={handleCalSelect} checkIn={checkIn} checkOut={checkOut}/></div>
         </div>
         <div className="booking-panel">
-          <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.6rem",fontWeight:300,marginBottom:4}}>
-            {fmt(space.price)} <span style={{fontFamily:"DM Sans,sans-serif",fontSize:"0.85rem",color:"var(--stone)",fontWeight:300}}>/ day</span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:20,fontSize:"0.82rem",color:"var(--stone)"}}>
-            <StarRating rating={space.rating} size="0.8rem"/> {space.rating} · {space.reviews} reviews
-          </div>
+          <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.6rem",fontWeight:300,marginBottom:4}}>{fmt(space.price)} <span style={{fontFamily:"DM Sans,sans-serif",fontSize:"0.85rem",color:"var(--stone)",fontWeight:300}}>/ day</span></div>
+          {space.rating>0&&<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:20,fontSize:"0.82rem",color:"var(--stone)"}}><StarRating rating={space.rating} size="0.8rem"/> {space.rating} · {space.reviews||0} reviews</div>}
           <div style={{border:"1.5px solid var(--sand)",borderRadius:4,overflow:"hidden",marginBottom:12}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr"}}>
               <div style={{padding:"12px 14px",borderRight:"1px solid var(--sand)",borderBottom:"1px solid var(--sand)"}}>
@@ -622,10 +536,10 @@ function SpaceDetail({ space, user, onBack, onBook, showAuth }) {
           <p style={{fontSize:"0.75rem",color:"var(--stone)",textAlign:"center",marginTop:8}}>🛡 Free cancellation 48+ hours before event</p>
           <hr className="divider"/>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,var(--moss),var(--terra))",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:600}}>{space.hostName[0]}</div>
+            <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,var(--moss),var(--terra))",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:600}}>{(space.hostName||"H")[0]}</div>
             <div>
               <div style={{fontWeight:600,fontSize:"0.9rem"}}>{space.hostName}</div>
-              <div style={{fontSize:"0.75rem",color:"var(--stone)"}}>Verified Host · Responds in &lt;2hrs</div>
+              <div style={{fontSize:"0.75rem",color:"var(--stone)"}}>Verified Host</div>
             </div>
           </div>
         </div>
@@ -634,19 +548,16 @@ function SpaceDetail({ space, user, onBack, onBook, showAuth }) {
   );
 }
 
-// ─── BROWSE PAGE ──────────────────────────────────────────────────────────────
 function BrowsePage({ user, allSpaces, onViewSpace, showAuth }) {
   const [search, setSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [maxPrice, setMaxPrice] = useState(2000);
+  const [maxPrice, setMaxPrice] = useState(5000);
   const [favs, setFavs] = useState([]);
   const eventTypes = ["All","Wedding","Birthday","Baby Shower","Graduation","Corporate"];
   const filtered = allSpaces.filter(s => {
     const ms = s.title.toLowerCase().includes(search.toLowerCase())||s.location.toLowerCase().includes(search.toLowerCase());
-    const me = eventFilter==="All"||s.events.some(e=>e.toLowerCase().includes(eventFilter.toLowerCase()));
-    const mt = typeFilter==="All"||s.type===typeFilter;
-    return ms&&me&&mt&&s.price<=maxPrice;
+    const me = eventFilter==="All"||(s.events||[]).some(e=>e.toLowerCase().includes(eventFilter.toLowerCase()));
+    return ms&&me&&s.price<=maxPrice;
   });
   const toggleFav = id => setFavs(f=>f.includes(id)?f.filter(x=>x!==id):[...f,id]);
   return (
@@ -658,8 +569,8 @@ function BrowsePage({ user, allSpaces, onViewSpace, showAuth }) {
         </div>
         <div className="search-box">
           <div className="search-field">
-            <label>Location</label>
-            <input type="text" placeholder="City, state or ZIP" value={search} onChange={e=>setSearch(e.target.value)}/>
+            <label>Location or Name</label>
+            <input type="text" placeholder="City, state or space name" value={search} onChange={e=>setSearch(e.target.value)}/>
           </div>
           <div className="search-field">
             <label>Event Type</label>
@@ -670,7 +581,7 @@ function BrowsePage({ user, allSpaces, onViewSpace, showAuth }) {
           <div className="search-field" style={{borderRight:"none"}}>
             <label>Max Price</label>
             <select value={maxPrice} onChange={e=>setMaxPrice(Number(e.target.value))}>
-              <option value={2000}>Any price</option>
+              <option value={5000}>Any price</option>
               <option value={300}>Under $300</option>
               <option value={600}>Under $600</option>
               <option value={1000}>Under $1,000</option>
@@ -680,9 +591,9 @@ function BrowsePage({ user, allSpaces, onViewSpace, showAuth }) {
           <button className="search-submit">🔍</button>
         </div>
         <div className="stat-row">
-          <div className="stat-item"><strong>{allSpaces.length}+</strong><span>Spaces Listed</span></div>
-          <div className="stat-item"><strong>12K+</strong><span>Events Hosted</span></div>
+          <div className="stat-item"><strong>{allSpaces.length}</strong><span>Spaces Listed</span></div>
           <div className="stat-item"><strong>4.9★</strong><span>Avg. Rating</span></div>
+          <div className="stat-item"><strong>Free</strong><span>To Browse</span></div>
         </div>
       </div>
       <div style={{padding:"24px 5%",background:"var(--cream)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
@@ -692,24 +603,108 @@ function BrowsePage({ user, allSpaces, onViewSpace, showAuth }) {
         ))}
       </div>
       <div className="section">
-        <div className="flex-between" style={{marginBottom:28}}>
-          <h2 className="serif" style={{fontSize:"clamp(1.5rem,3vw,2.2rem)",fontWeight:300}}>{filtered.length} spaces <em style={{color:"var(--moss)"}}>available</em></h2>
-        </div>
         {filtered.length===0 ? (
-          <div style={{textAlign:"center",padding:"60px 20px",color:"var(--stone)"}}>
-            <div style={{fontSize:"3rem",marginBottom:16}}>🔍</div>
-            <p>No spaces match your search. Try adjusting your filters.</p>
+          <div className="empty-state">
+            <div className="icon">🌿</div>
+            <h2 className="serif" style={{fontSize:"1.8rem",fontWeight:300,marginBottom:16}}>No spaces listed yet</h2>
+            <p style={{color:"var(--stone)",marginBottom:28,lineHeight:1.7,maxWidth:400,margin:"0 auto 28px"}}>
+              Be the first to list your backyard, barn, or private land!<br/>Sign up as a host and start earning today.
+            </p>
+            <button className="btn btn-primary btn-lg" onClick={showAuth}>List Your Space →</button>
           </div>
         ) : (
-          <div className="grid-3">{filtered.map(s=><SpaceCard key={s.id} space={s} onClick={onViewSpace} onFav={toggleFav} isFaved={favs.includes(s.id)}/>)}</div>
+          <>
+            <div className="flex-between" style={{marginBottom:28}}>
+              <h2 className="serif" style={{fontSize:"clamp(1.5rem,3vw,2.2rem)",fontWeight:300}}>{filtered.length} space{filtered.length!==1?"s":""} <em style={{color:"var(--moss)"}}>available</em></h2>
+            </div>
+            <div className="grid-3">{filtered.map(s=><SpaceCard key={s.id} space={s} onClick={onViewSpace} onFav={toggleFav} isFaved={favs.includes(s.id)}/>)}</div>
+          </>
         )}
+      </div>
+      {allSpaces.length===0&&(
+        <div style={{background:"var(--bark)",padding:"60px 5%",textAlign:"center"}}>
+          <h2 className="serif" style={{fontSize:"2rem",fontWeight:300,color:"var(--cream)",marginBottom:16}}>Own a backyard, barn, or land?</h2>
+          <p style={{color:"rgba(245,240,232,0.7)",marginBottom:28,fontSize:"0.95rem"}}>List your space on Yard Events and start earning. Hosts earn an average of $480 per booking.</p>
+          <button className="btn btn-primary btn-lg" onClick={showAuth}>Become a Host →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ListSpaceModal({ existing, user, onClose, onSave }) {
+  const bgs = ["bg-yard","bg-barn","bg-lake","bg-garden","bg-ranch","bg-estate","bg-moss"];
+  const emojis = ["🌿","🏚","🌊","🌸","🐎","✨","🌳","🏡","🌻","🎋"];
+  const [form, setForm] = useState(existing||{title:"",location:"",type:"Backyard",price:"",guests:"",description:"",events:[],bg:"bg-yard",emoji:"🏡",amenities:""});
+  const [loading, setLoading] = useState(false);
+  const upd = (k,v) => setForm(f=>({...f,[k]:v}));
+  const toggleEvent = e => upd("events",form.events.includes(e)?form.events.filter(x=>x!==e):[...form.events,e]);
+  const submit = async () => {
+    if(!form.title||!form.location||!form.price){return;}
+    setLoading(true);
+    await onSave({...form,price:Number(form.price),guests:Number(form.guests),amenities:form.amenities?form.amenities.split(",").map(a=>a.trim()).filter(Boolean):[]});
+    setLoading(false);
+  };
+  return (
+    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal modal-wide">
+        <div className="flex-between" style={{marginBottom:24}}>
+          <div>
+            <div className="section-label" style={{marginBottom:6}}>{existing?"Edit Listing":"New Listing"}</div>
+            <h2 className="serif" style={{fontSize:"1.8rem",fontWeight:300}}>{existing?"Update your space":"List your space"}</h2>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:"1.4rem",color:"var(--stone)"}}>×</button>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">Space Name *</label><input className="form-input" placeholder="e.g. The Sundown Garden" value={form.title} onChange={e=>upd("title",e.target.value)}/></div>
+          <div className="form-group"><label className="form-label">Location *</label><input className="form-input" placeholder="City, State" value={form.location} onChange={e=>upd("location",e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Space Type</label>
+            <select className="form-input" value={form.type} onChange={e=>upd("type",e.target.value)}>
+              {["Backyard","Barn","Private Land","Garden","Ranch","Estate","Other"].map(t=><option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="form-group"><label className="form-label">Max Guests</label><input className="form-input" type="number" placeholder="e.g. 75" value={form.guests} onChange={e=>upd("guests",e.target.value)}/></div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Price per Day (USD) *</label>
+          <input className="form-input" type="number" placeholder="350" value={form.price} onChange={e=>upd("price",e.target.value)}/>
+          <span className="form-hint">You keep 88% after the 12% platform fee.</span>
+        </div>
+        <div className="form-group"><label className="form-label">Description</label><textarea className="form-input" placeholder="Describe your space — what makes it special, what's included, any rules..." value={form.description} onChange={e=>upd("description",e.target.value)}/></div>
+        <div className="form-group"><label className="form-label">Amenities (comma separated)</label><input className="form-input" placeholder="Parking, Fire pit, Tables & chairs, String lights" value={form.amenities} onChange={e=>upd("amenities",e.target.value)}/></div>
+        <div className="form-group">
+          <label className="form-label">Great For</label>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {["Wedding","Birthday","Baby Shower","Graduation","Corporate","Bridal Shower","Holiday Party"].map(ev=>(
+              <button key={ev} type="button" onClick={()=>toggleEvent(ev)} style={{padding:"7px 14px",borderRadius:2,border:`1.5px solid ${form.events.includes(ev)?"var(--terra)":"var(--sand)"}`,background:form.events.includes(ev)?"var(--terra)":"#fff",color:form.events.includes(ev)?"#fff":"var(--bark)",fontSize:"0.78rem",cursor:"pointer",transition:"all 0.2s"}}>{ev}</button>
+            ))}
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Card Color</label>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{bgs.map(bg=><div key={bg} onClick={()=>upd("bg",bg)} className={bg} style={{width:32,height:32,borderRadius:3,cursor:"pointer",border:`3px solid ${form.bg===bg?"var(--terra)":"transparent"}`,transition:"all 0.2s"}}/>)}</div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Emoji</label>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{emojis.map(e=><button key={e} type="button" onClick={()=>upd("emoji",e)} style={{fontSize:"1.2rem",padding:"4px 6px",border:`2px solid ${form.emoji===e?"var(--terra)":"var(--sand)"}`,borderRadius:3,background:"#fff",cursor:"pointer"}}>{e}</button>)}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:12,marginTop:8}}>
+          <button className="btn btn-primary btn-lg" style={{flex:1}} onClick={submit} disabled={loading||!form.title||!form.location||!form.price}>
+            {loading?<><span className="loading-spinner"/> Saving…</>:existing?"Update Listing":"Publish Space 🎉"}
+          </button>
+          <button className="btn btn-secondary btn-lg" onClick={onClose}>Cancel</button>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── HOST DASHBOARD ───────────────────────────────────────────────────────────
-function HostDashboard({ user, showToast }) {
+function HostDashboard({ user, showToast, onSpacesUpdate }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [myListings, setMyListings] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
@@ -717,16 +712,15 @@ function HostDashboard({ user, showToast }) {
   const [editListing, setEditListing] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [user]);
+  useEffect(() => { loadData(); }, [user]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const lq = query(collection(db,"listings"), where("hostId","==",user.uid));
       const lsnap = await getDocs(lq);
-      setMyListings(lsnap.docs.map(d=>({id:d.id,...d.data()})));
+      const listings = lsnap.docs.map(d=>({id:d.id,...d.data()}));
+      setMyListings(listings);
       const bq = query(collection(db,"bookings"), where("hostId","==",user.uid));
       const bsnap = await getDocs(bq);
       setMyBookings(bsnap.docs.map(d=>({id:d.id,...d.data()})));
@@ -735,13 +729,7 @@ function HostDashboard({ user, showToast }) {
   };
 
   const totalEarnings = myBookings.reduce((sum,b)=>sum+(b.total||0)*0.88,0);
-
-  const tabs = [
-    {id:"overview",label:"Overview",icon:"📊"},
-    {id:"listings",label:"My Spaces",icon:"🏡"},
-    {id:"bookings",label:"Bookings",icon:"📅"},
-    {id:"earnings",label:"Earnings",icon:"💰"},
-  ];
+  const tabs = [{id:"overview",label:"Overview",icon:"📊"},{id:"listings",label:"My Spaces",icon:"🏡"},{id:"bookings",label:"Bookings",icon:"📅"},{id:"earnings",label:"Earnings",icon:"💰"}];
 
   return (
     <div className="section">
@@ -752,11 +740,7 @@ function HostDashboard({ user, showToast }) {
       <div style={{display:"flex",gap:32,flexWrap:"wrap"}}>
         <div style={{width:200,flexShrink:0}}>
           <div className="dash-nav">
-            {tabs.map(t=>(
-              <button key={t.id} className={`dash-nav-item${activeTab===t.id?" active":""}`} onClick={()=>setActiveTab(t.id)}>
-                <span>{t.icon}</span>{t.label}
-              </button>
-            ))}
+            {tabs.map(t=><button key={t.id} className={`dash-nav-item${activeTab===t.id?" active":""}`} onClick={()=>setActiveTab(t.id)}><span>{t.icon}</span>{t.label}</button>)}
           </div>
           <hr className="divider"/>
           <div style={{background:"var(--cream)",borderRadius:4,padding:16,fontSize:"0.82rem",color:"var(--stone)"}}>
@@ -766,17 +750,11 @@ function HostDashboard({ user, showToast }) {
           </div>
         </div>
         <div style={{flex:1,minWidth:0}}>
-          {loading && <div style={{textAlign:"center",padding:40,color:"var(--stone)"}}>Loading your dashboard…</div>}
-
-          {!loading && activeTab==="overview" && (
+          {loading&&<div style={{textAlign:"center",padding:40,color:"var(--stone)"}}>Loading…</div>}
+          {!loading&&activeTab==="overview"&&(
             <div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:16,marginBottom:32}}>
-                {[
-                  {label:"Total Earnings",value:fmt(totalEarnings),icon:"💰",color:"var(--green)"},
-                  {label:"Active Listings",value:myListings.length,icon:"🏡",color:"var(--moss)"},
-                  {label:"Total Bookings",value:myBookings.length,icon:"📅",color:"var(--terra)"},
-                  {label:"Avg. Rating",value:"4.9 ★",icon:"⭐",color:"var(--gold)"},
-                ].map(s=>(
+                {[{label:"Total Earnings",value:fmt(totalEarnings),icon:"💰",color:"var(--green)"},{label:"Active Listings",value:myListings.length,icon:"🏡",color:"var(--moss)"},{label:"Total Bookings",value:myBookings.length,icon:"📅",color:"var(--terra)"},{label:"Avg. Rating",value:"New",icon:"⭐",color:"var(--gold)"}].map(s=>(
                   <div key={s.label} style={{background:"#fff",borderRadius:6,padding:"20px 18px",boxShadow:"0 2px 12px var(--shadow)"}}>
                     <div style={{fontSize:"1.5rem",marginBottom:8}}>{s.icon}</div>
                     <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.8rem",fontWeight:300,color:s.color}}>{s.value}</div>
@@ -784,29 +762,23 @@ function HostDashboard({ user, showToast }) {
                   </div>
                 ))}
               </div>
-              <h3 className="serif" style={{fontSize:"1.2rem",marginBottom:16}}>Quick Actions</h3>
-              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                <button className="btn btn-primary" onClick={()=>{setEditListing(null);setShowListForm(true);}}>+ List New Space</button>
-                <button className="btn btn-secondary" onClick={()=>setActiveTab("bookings")}>View Bookings</button>
-                <button className="btn btn-secondary" onClick={()=>setActiveTab("earnings")}>View Earnings</button>
-              </div>
+              <button className="btn btn-primary btn-lg" onClick={()=>{setEditListing(null);setShowListForm(true);}}>+ List New Space</button>
             </div>
           )}
-
-          {!loading && activeTab==="listings" && (
+          {!loading&&activeTab==="listings"&&(
             <div>
               <div className="flex-between" style={{marginBottom:20}}>
                 <h3 className="serif" style={{fontSize:"1.3rem"}}>My Spaces ({myListings.length})</h3>
                 <button className="btn btn-primary btn-sm" onClick={()=>{setEditListing(null);setShowListForm(true);}}>+ Add New Space</button>
               </div>
-              {myListings.length===0 ? (
-                <div style={{textAlign:"center",padding:"60px 20px",background:"#fff",borderRadius:6,border:"2px dashed var(--sand)"}}>
-                  <div style={{fontSize:"3rem",marginBottom:16}}>🏡</div>
+              {myListings.length===0?(
+                <div className="empty-state">
+                  <div className="icon">🏡</div>
                   <h3 className="serif" style={{marginBottom:12}}>No spaces listed yet</h3>
                   <p style={{color:"var(--stone)",marginBottom:24}}>List your first space and start earning.</p>
                   <button className="btn btn-primary" onClick={()=>setShowListForm(true)}>List My First Space</button>
                 </div>
-              ) : (
+              ):(
                 <div className="grid-2">
                   {myListings.map(l=>(
                     <div key={l.id} style={{background:"#fff",borderRadius:6,overflow:"hidden",boxShadow:"0 2px 12px var(--shadow)"}}>
@@ -819,7 +791,7 @@ function HostDashboard({ user, showToast }) {
                         <div style={{fontSize:"0.8rem",color:"var(--stone)",marginBottom:12}}>📍 {l.location} · {fmt(l.price)}/day · Up to {l.guests} guests</div>
                         <div style={{display:"flex",gap:8}}>
                           <button className="btn btn-secondary btn-sm" onClick={()=>{setEditListing(l);setShowListForm(true);}}>Edit</button>
-                          <button className="btn btn-danger btn-sm" onClick={async()=>{await deleteDoc(doc(db,"listings",l.id));setMyListings(prev=>prev.filter(x=>x.id!==l.id));showToast("Listing removed.","default");}}>Remove</button>
+                          <button className="btn btn-danger btn-sm" onClick={async()=>{await deleteDoc(doc(db,"listings",l.id));setMyListings(prev=>prev.filter(x=>x.id!==l.id));onSpacesUpdate();showToast("Listing removed.","default");}}>Remove</button>
                         </div>
                       </div>
                     </div>
@@ -828,13 +800,12 @@ function HostDashboard({ user, showToast }) {
               )}
             </div>
           )}
-
-          {!loading && activeTab==="bookings" && (
+          {!loading&&activeTab==="bookings"&&(
             <div>
               <h3 className="serif" style={{fontSize:"1.3rem",marginBottom:20}}>Incoming Bookings ({myBookings.length})</h3>
-              {myBookings.length===0 ? (
-                <div style={{textAlign:"center",padding:"40px",color:"var(--stone)"}}>No bookings yet. List your space to start receiving bookings!</div>
-              ) : (
+              {myBookings.length===0?(
+                <div style={{textAlign:"center",padding:"40px",color:"var(--stone)"}}>No bookings yet. Once guests book your space they'll appear here!</div>
+              ):(
                 <div style={{background:"#fff",borderRadius:6,boxShadow:"0 2px 12px var(--shadow)",padding:"8px 20px"}}>
                   {myBookings.map((b,i)=>(
                     <div key={i} className="booking-row">
@@ -853,16 +824,11 @@ function HostDashboard({ user, showToast }) {
               )}
             </div>
           )}
-
-          {!loading && activeTab==="earnings" && (
+          {!loading&&activeTab==="earnings"&&(
             <div>
               <h3 className="serif" style={{fontSize:"1.3rem",marginBottom:20}}>Earnings Summary</h3>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:16,marginBottom:28}}>
-                {[
-                  {label:"Total Earned",value:fmt(totalEarnings)},
-                  {label:"Pending",value:fmt(0)},
-                  {label:"Bookings",value:myBookings.length},
-                ].map(e=>(
+                {[{label:"Total Earned",value:fmt(totalEarnings)},{label:"Bookings",value:myBookings.length},{label:"Platform Fee",value:"12%"}].map(e=>(
                   <div key={e.label} style={{background:"#fff",borderRadius:6,padding:20,boxShadow:"0 2px 12px var(--shadow)",textAlign:"center"}}>
                     <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.8rem",color:"var(--green)",marginBottom:4}}>{e.value}</div>
                     <div style={{fontSize:"0.75rem",color:"var(--stone)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{e.label}</div>
@@ -870,20 +836,17 @@ function HostDashboard({ user, showToast }) {
                 ))}
               </div>
               <div style={{background:"var(--cream)",borderRadius:4,padding:"14px 16px",fontSize:"0.82rem",color:"var(--stone)"}}>
-                💳 Payouts are sent to your bank account within 24 hours of each completed event. Platform fee: 12%.
+                💳 Payouts are sent to your bank account within 24 hours of each completed event.
               </div>
             </div>
           )}
         </div>
       </div>
-      {showListForm && (
-        <ListSpaceModal
-          existing={editListing}
-          user={user}
-          onClose={()=>{setShowListForm(false);setEditListing(null);}}
+      {showListForm&&(
+        <ListSpaceModal existing={editListing} user={user} onClose={()=>{setShowListForm(false);setEditListing(null);}}
           onSave={async(listing)=>{
             try {
-              if(editListing) {
+              if(editListing){
                 await updateDoc(doc(db,"listings",editListing.id),{...listing,updatedAt:serverTimestamp()});
                 setMyListings(prev=>prev.map(l=>l.id===editListing.id?{...listing,id:editListing.id}:l));
                 showToast("Listing updated!","success");
@@ -892,6 +855,7 @@ function HostDashboard({ user, showToast }) {
                 setMyListings(prev=>[...prev,{id:ref.id,...listing,hostId:user.uid,hostName:user.name,rating:0,reviews:0,booked:[]}]);
                 showToast("Space listed! 🎉","success");
               }
+              onSpacesUpdate();
               setShowListForm(false);setEditListing(null);
             } catch(e){showToast("Error saving listing.","error");}
           }}
@@ -901,108 +865,9 @@ function HostDashboard({ user, showToast }) {
   );
 }
 
-// ─── LIST SPACE MODAL ─────────────────────────────────────────────────────────
-function ListSpaceModal({ existing, user, onClose, onSave }) {
-  const bgs = ["bg-yard","bg-barn","bg-lake","bg-garden","bg-ranch","bg-estate","bg-moss"];
-  const emojis = ["🌿","🏚","🌊","🌸","🐎","✨","🌳","🏡","🌻","🎋"];
-  const [form, setForm] = useState(existing||{title:"",location:"",type:"Backyard",price:"",guests:"",description:"",events:[],bg:"bg-yard",emoji:"🏡",amenities:""});
-  const [loading, setLoading] = useState(false);
-  const upd = (k,v) => setForm(f=>({...f,[k]:v}));
-  const toggleEvent = e => upd("events",form.events.includes(e)?form.events.filter(x=>x!==e):[...form.events,e]);
-
-  const submit = async () => {
-    if(!form.title||!form.location||!form.price){return;}
-    setLoading(true);
-    await onSave({...form,price:Number(form.price),guests:Number(form.guests),amenities:form.amenities?form.amenities.split(",").map(a=>a.trim()):[]});
-    setLoading(false);
-  };
-
-  return (
-    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="modal modal-wide">
-        <div className="flex-between" style={{marginBottom:24}}>
-          <div>
-            <div className="section-label" style={{marginBottom:6}}>{existing?"Edit Listing":"New Listing"}</div>
-            <h2 className="serif" style={{fontSize:"1.8rem",fontWeight:300}}>{existing?"Update your space":"List your space"}</h2>
-          </div>
-          <button onClick={onClose} style={{background:"none",border:"none",fontSize:"1.4rem",color:"var(--stone)"}}>×</button>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Space Name *</label>
-            <input className="form-input" placeholder="e.g. The Sundown Garden" value={form.title} onChange={e=>upd("title",e.target.value)}/>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Location *</label>
-            <input className="form-input" placeholder="City, State" value={form.location} onChange={e=>upd("location",e.target.value)}/>
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Space Type</label>
-            <select className="form-input" value={form.type} onChange={e=>upd("type",e.target.value)}>
-              {["Backyard","Barn","Private Land","Garden","Ranch","Estate","Other"].map(t=><option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Max Guests</label>
-            <input className="form-input" type="number" placeholder="e.g. 75" value={form.guests} onChange={e=>upd("guests",e.target.value)}/>
-          </div>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Price per Day (USD) *</label>
-          <div className="input-group">
-            <span className="input-prefix">$</span>
-            <input className="form-input" type="number" placeholder="350" value={form.price} onChange={e=>upd("price",e.target.value)} style={{paddingLeft:28}}/>
-          </div>
-          <span className="form-hint">You keep 88% after the 12% platform fee.</span>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Description</label>
-          <textarea className="form-input" placeholder="Describe your space — what makes it special, what's included, any rules..." value={form.description} onChange={e=>upd("description",e.target.value)}/>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Amenities (comma separated)</label>
-          <input className="form-input" placeholder="Parking, Fire pit, Tables & chairs, String lights" value={form.amenities} onChange={e=>upd("amenities",e.target.value)}/>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Great For</label>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            {["Wedding","Birthday","Baby Shower","Graduation","Corporate","Bridal Shower","Holiday Party"].map(ev=>(
-              <button key={ev} type="button" onClick={()=>toggleEvent(ev)} style={{padding:"7px 14px",borderRadius:2,border:`1.5px solid ${form.events.includes(ev)?"var(--terra)":"var(--sand)"}`,background:form.events.includes(ev)?"var(--terra)":"#fff",color:form.events.includes(ev)?"#fff":"var(--bark)",fontSize:"0.78rem",cursor:"pointer",transition:"all 0.2s"}}>{ev}</button>
-            ))}
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Card Color</label>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {bgs.map(bg=><div key={bg} onClick={()=>upd("bg",bg)} className={bg} style={{width:32,height:32,borderRadius:3,cursor:"pointer",border:`3px solid ${form.bg===bg?"var(--terra)":"transparent"}`,transition:"all 0.2s"}}/>)}
-            </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Emoji</label>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              {emojis.map(e=><button key={e} type="button" onClick={()=>upd("emoji",e)} style={{fontSize:"1.2rem",padding:"4px 6px",border:`2px solid ${form.emoji===e?"var(--terra)":"var(--sand)"}`,borderRadius:3,background:"#fff",cursor:"pointer"}}>{e}</button>)}
-            </div>
-          </div>
-        </div>
-        <div style={{display:"flex",gap:12,marginTop:8}}>
-          <button className="btn btn-primary btn-lg" style={{flex:1}} onClick={submit} disabled={loading||!form.title||!form.location||!form.price}>
-            {loading?<><span className="loading-spinner"/> Saving…</>:existing?"Update Listing":"Publish Space 🎉"}
-          </button>
-          <button className="btn btn-secondary btn-lg" onClick={onClose}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── GUEST DASHBOARD ──────────────────────────────────────────────────────────
 function GuestDashboard({ user }) {
   const [myBookings, setMyBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -1015,25 +880,21 @@ function GuestDashboard({ user }) {
     };
     load();
   }, [user]);
-
   return (
     <div className="section">
       <div style={{marginBottom:28}}>
         <div className="section-label">My Account</div>
         <h2 className="serif" style={{fontSize:"clamp(1.6rem,3vw,2.4rem)",fontWeight:300}}>Hi, <em style={{color:"var(--terra)"}}>{user.name.split(" ")[0]}</em> 👋</h2>
       </div>
-      <div className="tabs">
-        <button className="tab-btn active">My Bookings</button>
-      </div>
-      {loading && <div style={{textAlign:"center",padding:40,color:"var(--stone)"}}>Loading your bookings…</div>}
-      {!loading && myBookings.length===0 && (
-        <div style={{textAlign:"center",padding:"60px 20px",background:"#fff",borderRadius:6,border:"2px dashed var(--sand)"}}>
-          <div style={{fontSize:"3rem",marginBottom:16}}>🗓</div>
+      {loading&&<div style={{textAlign:"center",padding:40,color:"var(--stone)"}}>Loading your bookings…</div>}
+      {!loading&&myBookings.length===0&&(
+        <div className="empty-state">
+          <div className="icon">🗓</div>
           <h3 className="serif" style={{marginBottom:12}}>No bookings yet</h3>
           <p style={{color:"var(--stone)"}}>Browse spaces and book your first event venue!</p>
         </div>
       )}
-      {!loading && myBookings.length>0 && (
+      {!loading&&myBookings.length>0&&(
         <div style={{display:"flex",flexDirection:"column",gap:16}}>
           {myBookings.map((b,i)=>(
             <div key={i} style={{background:"#fff",borderRadius:6,boxShadow:"0 2px 12px var(--shadow)",padding:20,display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
@@ -1055,7 +916,157 @@ function GuestDashboard({ user }) {
   );
 }
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function ContactPage({ showToast }) {
+  const [form, setForm] = useState({ name:"", email:"", subject:"", message:"" });
+  const [loading, setLoading] = useState(false);
+  const upd = (k,v) => setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if(!form.name||!form.email||!form.message) return;
+    setLoading(true);
+    try {
+      await addDoc(collection(db,"contacts"), { ...form, createdAt: serverTimestamp() });
+      showToast("Message sent! We'll get back to you within 24 hours. 🎉", "success");
+      setForm({ name:"", email:"", subject:"", message:"" });
+    } catch(e) { showToast("Error sending message. Please try again.", "error"); }
+    setLoading(false);
+  };
+  return (
+    <div className="section" style={{maxWidth:900,margin:"0 auto"}}>
+      <div style={{marginBottom:40}}>
+        <div className="section-label">Get In Touch</div>
+        <h1 className="serif" style={{fontSize:"clamp(2rem,4vw,3rem)",fontWeight:300,marginBottom:16}}>We're here to <em style={{color:"var(--terra)"}}>help</em></h1>
+        <p style={{color:"var(--stone)",fontSize:"0.95rem",lineHeight:1.7}}>Have a question about booking or listing? Send us a message and we'll get back to you within 24 hours.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:40}}>
+        <div>
+          <div className="form-group"><label className="form-label">Your Name *</label><input className="form-input" placeholder="Your name" value={form.name} onChange={e=>upd("name",e.target.value)}/></div>
+          <div className="form-group"><label className="form-label">Email Address *</label><input className="form-input" type="email" placeholder="you@email.com" value={form.email} onChange={e=>upd("email",e.target.value)}/></div>
+          <div className="form-group">
+            <label className="form-label">Subject</label>
+            <select className="form-input" value={form.subject} onChange={e=>upd("subject",e.target.value)}>
+              <option value="">Select a topic</option>
+              <option>Booking Question</option>
+              <option>Listing My Space</option>
+              <option>Payment Issue</option>
+              <option>Cancellation Request</option>
+              <option>Report a Problem</option>
+              <option>General Question</option>
+            </select>
+          </div>
+          <div className="form-group"><label className="form-label">Message *</label><textarea className="form-input" placeholder="Tell us how we can help..." value={form.message} onChange={e=>upd("message",e.target.value)} style={{minHeight:140}}/></div>
+          <button className="btn btn-primary btn-lg btn-block" onClick={submit} disabled={loading||!form.name||!form.email||!form.message}>
+            {loading?"Sending…":"Send Message →"}
+          </button>
+        </div>
+        <div>
+          <div style={{background:"var(--cream)",borderRadius:6,padding:28,marginBottom:20}}>
+            <h3 className="serif" style={{fontSize:"1.2rem",marginBottom:16}}>Contact Info</h3>
+            {[["📧","Email","hello@yardevents.net"],["🌐","Website","yardevents.net"],["⏰","Response Time","Within 24 hours"],["📍","Based in","Perrysburg, Ohio"]].map(([icon,label,val])=>(
+              <div key={label} style={{display:"flex",gap:12,marginBottom:16}}>
+                <span style={{fontSize:"1.2rem"}}>{icon}</span>
+                <div>
+                  <div style={{fontSize:"0.72rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--terra)",marginBottom:2}}>{label}</div>
+                  <div style={{fontSize:"0.9rem",color:"var(--bark)"}}>{val}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"var(--bark)",borderRadius:6,padding:28,color:"var(--cream)"}}>
+            <h3 className="serif" style={{fontSize:"1.2rem",marginBottom:12,color:"var(--gold)"}}>Are you a Host?</h3>
+            <p style={{fontSize:"0.88rem",lineHeight:1.7,color:"rgba(245,240,232,0.75)",marginBottom:16}}>List your backyard, barn, or private land and start earning today.</p>
+            <div style={{fontSize:"0.82rem",color:"var(--gold)"}}>→ Sign up and click "List My Space"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HelpPage() {
+  const [open, setOpen] = useState(null);
+  const faqs = [
+    { category:"For Guests", items:[
+      { q:"How do I book a space?", a:"Browse spaces, click on one you like, select your date, choose your guest count, then click Reserve This Space. You need a free account and payment to confirm." },
+      { q:"How much does it cost?", a:"Each space sets their own daily rate. You also pay a 12% service fee which covers booking protection and customer support. The total is always shown before you pay." },
+      { q:"Can I cancel my booking?", a:"Yes! Full refund if you cancel at least 48 hours before your event. Cancellations within 48 hours are subject to the host's policy." },
+      { q:"How do I contact the host?", a:"Once your booking is confirmed, the host's contact info is shared so you can coordinate setup, parking, and special requests." },
+    ]},
+    { category:"For Hosts", items:[
+      { q:"How do I list my space?", a:"Create an account, select Host as your role, then click List My Space in your Host Dashboard. Fill in your space details, pricing, and availability." },
+      { q:"How much can I earn?", a:"You keep 88% of every booking — we charge a 12% platform fee. Payouts are sent to your bank within 24 hours of each completed event." },
+      { q:"What are my responsibilities?", a:"Keep your listing accurate, respond to guests promptly, ensure the space is clean and ready, and be available on event day." },
+    ]},
+    { category:"Payments & Safety", items:[
+      { q:"Is my payment information safe?", a:"Yes! All payments are processed by Stripe, one of the world's most trusted payment platforms. Your card info is never stored on our servers." },
+      { q:"What payment methods do you accept?", a:"All major credit and debit cards including Visa, Mastercard, American Express, and Discover." },
+    ]},
+  ];
+  return (
+    <div className="section" style={{maxWidth:800,margin:"0 auto"}}>
+      <div style={{marginBottom:40}}>
+        <div className="section-label">Help Center</div>
+        <h1 className="serif" style={{fontSize:"clamp(2rem,4vw,3rem)",fontWeight:300,marginBottom:16}}>Frequently Asked <em style={{color:"var(--terra)"}}>Questions</em></h1>
+      </div>
+      {faqs.map((section,si)=>(
+        <div key={si} style={{marginBottom:40}}>
+          <h2 className="serif" style={{fontSize:"1.4rem",marginBottom:20,color:"var(--moss)"}}>{section.category}</h2>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {section.items.map((faq,fi)=>{
+              const id=`${si}-${fi}`;
+              return (
+                <div key={fi} style={{border:"1px solid var(--sand)",borderRadius:4,overflow:"hidden",background:"#fff"}}>
+                  <button onClick={()=>setOpen(open===id?null:id)} style={{width:"100%",padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"none",border:"none",textAlign:"left",cursor:"pointer",fontWeight:500,fontSize:"0.92rem",color:"var(--bark)"}}>
+                    {faq.q}<span style={{fontSize:"1.2rem",color:"var(--terra)",flexShrink:0,marginLeft:12}}>{open===id?"−":"+"}</span>
+                  </button>
+                  {open===id&&<div style={{padding:"0 20px 16px",color:"var(--stone)",fontSize:"0.88rem",lineHeight:1.75,borderTop:"1px solid var(--sand)"}}><div style={{paddingTop:16}}>{faq.a}</div></div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div style={{background:"var(--terra)",borderRadius:6,padding:32,textAlign:"center",color:"#fff"}}>
+        <h3 className="serif" style={{fontSize:"1.4rem",marginBottom:8}}>Still have questions?</h3>
+        <p style={{opacity:0.85,marginBottom:20,fontSize:"0.9rem"}}>Our team responds within 24 hours.</p>
+        <a href="mailto:hello@yardevents.net" style={{background:"#fff",color:"var(--terra)",padding:"12px 28px",borderRadius:3,fontWeight:600,fontSize:"0.85rem",letterSpacing:"0.06em",textTransform:"uppercase",textDecoration:"none",display:"inline-block"}}>Email Us →</a>
+      </div>
+    </div>
+  );
+}
+
+function Footer({ onNavigate }) {
+  return (
+    <footer style={{background:"var(--bark)",padding:"48px 5% 28px",marginTop:60}}>
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:40,marginBottom:40,flexWrap:"wrap"}}>
+        <div>
+          <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.4rem",fontWeight:600,color:"var(--cream)",marginBottom:12}}>Yard<span style={{color:"var(--terra)"}}>Events</span></div>
+          <p style={{fontSize:"0.85rem",lineHeight:1.7,color:"rgba(245,240,232,0.5)",maxWidth:260}}>The marketplace for private event spaces. Connecting hosts with guests for celebrations that last a lifetime.</p>
+        </div>
+        <div>
+          <div style={{fontSize:"0.72rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"var(--gold)",marginBottom:16,fontWeight:600}}>Explore</div>
+          {[["Browse Spaces","browse"],["List Your Space","host-dash"],["Help Center","help"],["Contact Us","contact"]].map(([label,page])=>(
+            <div key={label} style={{marginBottom:10}}>
+              <button onClick={()=>onNavigate(page)} style={{background:"none",border:"none",color:"rgba(245,240,232,0.5)",fontSize:"0.85rem",cursor:"pointer",padding:0,textAlign:"left"}}>{label}</button>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{fontSize:"0.72rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"var(--gold)",marginBottom:16,fontWeight:600}}>Contact</div>
+          <div style={{fontSize:"0.85rem",color:"rgba(245,240,232,0.5)",lineHeight:2}}>
+            <div>📧 hello@yardevents.net</div>
+            <div>🌐 yardevents.net</div>
+            <div>📍 Perrysburg, Ohio</div>
+          </div>
+        </div>
+      </div>
+      <div style={{borderTop:"1px solid rgba(245,240,232,0.1)",paddingTop:24,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+        <p style={{fontSize:"0.78rem",color:"rgba(245,240,232,0.4)"}}>© 2026 Yard Events LLC. All rights reserved.</p>
+        <p style={{fontSize:"0.78rem",color:"rgba(245,240,232,0.4)"}}>Made with ❤️ in Perrysburg, Ohio</p>
+      </div>
+    </footer>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState("browse");
   const [user, setUser] = useState(null);
@@ -1064,10 +1075,9 @@ export default function App() {
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [bookingInfo, setBookingInfo] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
-  const [allSpaces, setAllSpaces] = useState(SAMPLE_SPACES);
+  const [allSpaces, setAllSpaces] = useState([]);
   const [toast, showToast] = useToast();
 
-  // Listen to Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -1075,48 +1085,30 @@ export default function App() {
         const snap = await getDocs(q);
         const userData = snap.empty ? {role:"guest"} : snap.docs[0].data();
         setUser({ uid: firebaseUser.uid, name: firebaseUser.displayName||firebaseUser.email, email: firebaseUser.email, role: userData.role||"guest" });
-      } else {
-        setUser(null);
-      }
+      } else { setUser(null); }
       setAuthLoading(false);
     });
     return unsub;
   }, []);
 
-  // Load listings from Firestore and merge with sample data
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const snap = await getDocs(collection(db,"listings"));
-        const firestoreSpaces = snap.docs.map(d=>({id:d.id,...d.data()}));
-        setAllSpaces([...SAMPLE_SPACES,...firestoreSpaces]);
-      } catch(e) { console.log(e); }
-    };
-    load();
-  }, []);
-
-  const handleAuth = (userData) => setUser(userData);
-
-  const handleViewSpace = (space) => {
-    setSelectedSpace(space);
-    setPage("detail");
-    window.scrollTo({top:0,behavior:"smooth"});
+  const loadSpaces = async () => {
+    try {
+      const snap = await getDocs(collection(db,"listings"));
+      setAllSpaces(snap.docs.map(d=>({id:d.id,...d.data()})));
+    } catch(e) { console.log(e); }
   };
 
+  useEffect(() => { loadSpaces(); }, []);
+
+  const handleAuth = (userData) => {
+    setUser(userData);
+    if(userData.role==="host") setPage("host-dash");
+  };
+
+  const handleViewSpace = (space) => { setSelectedSpace(space); setPage("detail"); window.scrollTo({top:0,behavior:"smooth"}); };
   const handleBook = (info) => { setBookingInfo(info); setShowPayment(true); };
-
-  const handlePaymentSuccess = () => {
-    setPage(user.role==="host"?"host-dash":"guest-dash");
-    window.scrollTo({top:0,behavior:"smooth"});
-    showToast("Booking confirmed! Check your email for details. 🎉","success");
-  };
-
-  const logout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setPage("browse");
-    showToast("Signed out successfully.");
-  };
+  const handlePaymentSuccess = () => { loadSpaces(); setPage("guest-dash"); window.scrollTo({top:0,behavior:"smooth"}); showToast("Booking confirmed! 🎉","success"); };
+  const logout = async () => { await signOut(auth); setUser(null); setPage("browse"); showToast("Signed out successfully."); };
 
   if (authLoading) {
     return (
@@ -1133,14 +1125,14 @@ export default function App() {
     <>
       <style dangerouslySetInnerHTML={{__html:css}}/>
       <Toast toast={toast}/>
-
-      {/* NAV */}
       <nav className="nav">
         <button className="nav-logo" onClick={()=>setPage("browse")}>Yard<span>Events</span></button>
         <div className="nav-actions">
+          <button className={`nav-tab${page==="browse"?" active":""}`} onClick={()=>setPage("browse")}>Browse</button>
+          <button className={`nav-tab${page==="help"?" active":""}`} onClick={()=>setPage("help")}>Help</button>
+          <button className={`nav-tab${page==="contact"?" active":""}`} onClick={()=>setPage("contact")}>Contact</button>
           {user ? (
             <>
-              <button className={`nav-tab${page==="browse"?" active":""}`} onClick={()=>setPage("browse")}>Browse</button>
               {user.role==="host" ? (
                 <button className={`nav-tab${page==="host-dash"?" active":""}`} onClick={()=>setPage("host-dash")}>Host Dashboard</button>
               ) : (
@@ -1150,31 +1142,20 @@ export default function App() {
               <button className="nav-tab" onClick={logout} style={{fontSize:"0.75rem"}}>Sign out</button>
             </>
           ) : (
-            <>
-              <button className={`nav-tab${page==="browse"?" active":""}`} onClick={()=>setPage("browse")}>Browse Spaces</button>
-              <button className={`nav-tab${page==="help"?" active":""}`} onClick={()=>setPage("help")}>Help</button>
-              <button className={`nav-tab${page==="contact"?" active":""}`} onClick={()=>setPage("contact")}>Contact Us</button>
-              <button className="btn btn-primary btn-sm" onClick={()=>setShowAuthModal(true)}>Sign In / Sign Up</button>
-            </>
+            <button className="btn btn-primary btn-sm" onClick={()=>setShowAuthModal(true)}>Sign In / Sign Up</button>
           )}
         </div>
       </nav>
 
-      {/* PAGES */}
       {page==="browse" && <BrowsePage user={user} allSpaces={allSpaces} onViewSpace={handleViewSpace} showAuth={()=>setShowAuthModal(true)}/>}
-      {page==="detail" && selectedSpace && (
-        <div className="section">
-          <SpaceDetail space={selectedSpace} user={user} onBack={()=>setPage("browse")} onBook={handleBook} showAuth={()=>setShowAuthModal(true)}/>
-        </div>
-      )}
-      {page==="host-dash" && user && <HostDashboard user={user} showToast={showToast}/>}
+      {page==="detail" && selectedSpace && <div className="section"><SpaceDetail space={selectedSpace} user={user} onBack={()=>setPage("browse")} onBook={handleBook} showAuth={()=>setShowAuthModal(true)}/></div>}
+      {page==="host-dash" && user && <HostDashboard user={user} showToast={showToast} onSpacesUpdate={loadSpaces}/>}
       {page==="guest-dash" && user && <GuestDashboard user={user}/>}
       {page==="contact" && <ContactPage showToast={showToast}/>}
       {page==="help" && <HelpPage/>}
 
       <Footer onNavigate={setPage}/>
 
-      {/* MODALS */}
       {showAuthModal && <AuthModal onClose={()=>setShowAuthModal(false)} onAuth={handleAuth} showToast={showToast}/>}
       {showPayment && selectedSpace && bookingInfo && (
         <PaymentModal booking={bookingInfo} space={selectedSpace} user={user} onClose={()=>setShowPayment(false)} onSuccess={handlePaymentSuccess} showToast={showToast}/>
