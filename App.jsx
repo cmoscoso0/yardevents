@@ -131,7 +131,7 @@ const css = `
 const fmt=(n)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:0}).format(n);
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 
-const VEHICLE_TYPES=["Car","Motorcycle","Quad/ATV","Boat","Jet Ski","RV/Camper","Trailer","Bicycle","Snowmobile","Other"];
+const VEHICLE_TYPES=["Car","Motorcycle","Quad/ATV","Boat","Jet Ski","RV/Camper","Semi Truck","Trailer","Semi Truck & Trailer","Bicycle","Snowmobile","Other"];
 const STORAGE_SPACE_TYPES=["Garage Bay","Driveway Spot","Covered Parking","Barn Storage","Outdoor Lot","Shed Space","Warehouse Bay","Other"];
 const EVENT_SPACE_TYPES=["Backyard","Barn","Private Land","Garden","Ranch","Estate","Other"];
 
@@ -600,7 +600,7 @@ function BrowsePage({user,allSpaces,onViewSpace,showAuth}){
   const eventSpaces=allSpaces.filter(s=>!s.category||s.category==="event");
   const storageSpaces=allSpaces.filter(s=>s.category==="storage");
   const eventTypes=["All","Wedding","Birthday","Baby Shower","Graduation","Corporate"];
-  const vehicleFilters=["All",...VEHICLE_TYPES.slice(0,6)];
+  const vehicleFilters=["All","Car","Motorcycle","Quad/ATV","Boat","Jet Ski","RV/Camper","Semi Truck","Trailer","Semi Truck & Trailer"];
 
   const filteredEvents=eventSpaces.filter(s=>{
     const ms=s.title.toLowerCase().includes(search.toLowerCase())||s.location.toLowerCase().includes(search.toLowerCase());
