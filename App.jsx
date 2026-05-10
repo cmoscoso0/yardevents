@@ -248,7 +248,7 @@ function SpaceCard({space,onClick,onFav,isFaved}){
         <span style={{position:"relative",zIndex:1}}>{space.emoji||"🏡"}</span>
         <div style={{position:"absolute",top:12,left:12,display:"flex",gap:6}}>
           <span className={`badge ${isStorage?"badge-blue":"badge-gold"}`}>{space.type}</span>
-          {isStorage&&<span className="badge badge-moss">{space.pricePeriod==="hourly"?"hourly":space.pricePeriod||"daily"}</span>}
+          {isStorage&&<span className="badge badge-moss">{space.pricePeriod||"hourly"}</span>}
         </div>
         <button style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:"1rem",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}} onClick={e=>{e.stopPropagation();onFav(space.id);}}>{isFaved?"❤️":"🤍"}</button>
       </div>
@@ -391,7 +391,7 @@ function StorageDetail({space,user,onBack,onBook,showAuth}){
   const [startDate,setStartDate]=useState("");
   const [startTime,setStartTime]=useState("08:00");
   const [duration,setDuration]=useState(space.minHours||1);
-  const [durationUnit,setDurationUnit]=useState(space.pricePeriod||"monthly");
+  const [durationUnit,setDurationUnit]=useState(space.pricePeriod||"hourly");
   const [vehicleType,setVehicleType]=useState("");
   const subtotal=space.price*duration;
   const serviceFee=Math.round(subtotal*0.12);
@@ -406,7 +406,7 @@ function StorageDetail({space,user,onBack,onBook,showAuth}){
         <div style={{position:"absolute",bottom:20,left:20,display:"flex",gap:8}}>
           <span className="badge badge-blue">{space.type}</span>
           <span className="badge badge-cream">{space.spaces||1} space{(space.spaces||1)>1?"s":""} available</span>
-          <span className="badge badge-moss">{space.pricePeriod||"monthly"}</span>
+          <span className="badge badge-moss">{space.pricePeriod||"hourly"}</span>
         </div>
       </div>
       <div className="detail-grid">
@@ -722,7 +722,7 @@ function ListSpaceModal({existing,user,onClose,onSave}){
   const bgs=["bg-yard","bg-barn","bg-lake","bg-garden","bg-ranch","bg-estate","bg-moss","bg-garage","bg-parking","bg-storage","bg-boat"];
   const emojis=["🌿","🏚","🌊","🌸","🐎","✨","🌳","🏡","🏠","🚗","⚓","🛥","🏍","🚐"];
   const [category,setCategory]=useState(existing?.category||"event");
-  const [form,setForm]=useState(existing||{title:"",location:"",type:"Backyard",priceType:"hourly",pricePeriod:"monthly",price:"",minHours:1,spaces:1,guests:"",description:"",events:[],vehicleTypes:[],bg:"bg-yard",emoji:"🏡",amenities:""});
+  const [form,setForm]=useState(existing||{title:"",location:"",type:"Backyard",priceType:"hourly",pricePeriod:"hourly",price:"",minHours:1,spaces:1,guests:"",description:"",events:[],vehicleTypes:[],bg:"bg-yard",emoji:"🏡",amenities:""});
   const [loading,setLoading]=useState(false);
   const upd=(k,v)=>setForm(f=>({...f,[k]:v}));
   const toggleEvent=e=>upd("events",form.events.includes(e)?form.events.filter(x=>x!==e):[...form.events,e]);
