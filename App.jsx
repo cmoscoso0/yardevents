@@ -624,7 +624,7 @@ function BrowsePage({user,allSpaces,onViewSpace,showAuth}){
             {activeCategory==="events"?"Find Your Perfect Event Space":"Find Storage & Parking Near You"}
           </div>
           <h1 className="serif" style={{fontSize:"clamp(2.5rem,6vw,4.5rem)",fontWeight:300,color:"var(--cream)",lineHeight:1.1,marginBottom:8}}>
-            {activeCategory==="events"?<>Where will you<br/><em>celebrate?</>:<>Where will you<br/><em>store it?</>}
+            {activeCategory==="events"?<>Where will you<br/><em>celebrate?</em></>:<>Where will you<br/><em>store it?</em></>}
           </h1>
         </div>
         <div className="search-box">
