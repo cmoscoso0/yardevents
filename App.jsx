@@ -654,7 +654,7 @@ function BrowsePage({user,allSpaces,onViewSpace,showAuth}){
         </div>
         <div className="stat-row">
           <div className="stat-item"><strong>{activeCategory==="events"?eventSpaces.length:storageSpaces.length}</strong><span>Spaces Listed</span></div>
-          <div className="stat-item"><strong>{activeCategory==="events"?"Hourly":"Monthly"}</strong><span>{activeCategory==="events"?"Flexible Booking":"From"}</span></div>
+          <div className="stat-item"><strong>{activeCategory==="events"?"Hourly":"Hourly"}</strong><span>{activeCategory==="events"?"Flexible Booking":"or Monthly"}</span></div>
           <div className="stat-item"><strong>Free</strong><span>To Browse</span></div>
         </div>
       </div>
