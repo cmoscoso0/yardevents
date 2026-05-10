@@ -241,14 +241,14 @@ function AuthModal({onClose,onAuth,showToast}){
 function SpaceCard({space,onClick,onFav,isFaved}){
   const isHourly=space.priceType==="hourly";
   const isStorage=space.category==="storage";
-  const priceSuffix=isStorage?(space.pricePeriod==="monthly"?"/mo":space.pricePeriod==="weekly"?"/wk":"/day"):isHourly?"/hour":"/day";
+  const priceSuffix=isStorage?(space.pricePeriod==="hourly"?"/hour":space.pricePeriod==="monthly"?"/mo":space.pricePeriod==="weekly"?"/wk":"/day"):isHourly?"/hour":"/day";
   return(
     <div className="card" style={{cursor:"pointer"}} onClick={()=>onClick(space)}>
       <div className={`card-img ${space.bg||"bg-yard"}`}>
         <span style={{position:"relative",zIndex:1}}>{space.emoji||"🏡"}</span>
         <div style={{position:"absolute",top:12,left:12,display:"flex",gap:6}}>
           <span className={`badge ${isStorage?"badge-blue":"badge-gold"}`}>{space.type}</span>
-          {isStorage&&<span className="badge badge-moss">{space.pricePeriod||"daily"}</span>}
+          {isStorage&&<span className="badge badge-moss">{space.pricePeriod==="hourly"?"hourly":space.pricePeriod||"daily"}</span>}
         </div>
         <button style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:"1rem",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}} onClick={e=>{e.stopPropagation();onFav(space.id);}}>{isFaved?"❤️":"🤍"}</button>
       </div>
@@ -305,7 +305,7 @@ function PaymentModal({booking,space,user,onClose,onSuccess,showToast}){
     }catch(e){showToast("Payment failed. Please try again.","error");setLoading(false);}
   };
   const getPriceLine=()=>{
-    if(isStorage){const dur=booking.duration||1;const unit=booking.durationUnit||"month";return `${fmt(space.price)}/${unit==="monthly"?"mo":unit==="weekly"?"wk":"day"} × ${dur} ${unit}${dur>1?"s":""}`;}
+    if(isStorage){const dur=booking.duration||1;const unit=booking.durationUnit||"month";if(unit==="hourly")return `${fmt(space.price)}/hr × ${dur} hour${dur>1?"s":""}`;return `${fmt(space.price)}/${unit==="monthly"?"mo":unit==="weekly"?"wk":"day"} × ${dur} ${unit}${dur>1?"s":""}`;}
     if(isHourly)return `${fmt(space.price)}/hr × ${hours}hr`;
     return `${fmt(space.price)} per day`;
   };
@@ -387,13 +387,17 @@ function PaymentModal({booking,space,user,onClose,onSuccess,showToast}){
 }
 
 function StorageDetail({space,user,onBack,onBook,showAuth}){
+  const isHourlyStorage=space.pricePeriod==="hourly";
   const [startDate,setStartDate]=useState("");
-  const [duration,setDuration]=useState(1);
+  const [startTime,setStartTime]=useState("08:00");
+  const [duration,setDuration]=useState(space.minHours||1);
   const [durationUnit,setDurationUnit]=useState(space.pricePeriod||"monthly");
   const [vehicleType,setVehicleType]=useState("");
   const subtotal=space.price*duration;
   const serviceFee=Math.round(subtotal*0.12);
-  const unitLabel=durationUnit==="monthly"?"month":durationUnit==="weekly"?"week":"day";
+  const unitLabel=isHourlyStorage?"hour":durationUnit==="monthly"?"month":durationUnit==="weekly"?"week":"day";
+  const storageTimes=[];
+  for(let h=0;h<=23;h++){storageTimes.push(`${String(h).padStart(2,"0")}:00`);storageTimes.push(`${String(h).padStart(2,"0")}:30`);}
   return(
     <div>
       <button onClick={onBack} className="btn btn-secondary btn-sm" style={{marginBottom:20}}>← Back to Listings</button>
@@ -432,22 +436,34 @@ function StorageDetail({space,user,onBack,onBook,showAuth}){
         </div>
         <div className="booking-panel">
           <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.6rem",fontWeight:300,marginBottom:4}}>{fmt(space.price)} <span style={{fontFamily:"DM Sans,sans-serif",fontSize:"0.85rem",color:"var(--stone)",fontWeight:300}}>/ {unitLabel}</span></div>
-          <div style={{fontSize:"0.78rem",color:"var(--blue)",marginBottom:16,fontWeight:500}}>Short & long term available</div>
+          <div style={{fontSize:"0.78rem",color:"var(--blue)",marginBottom:16,fontWeight:500}}>{isHourlyStorage?"Hourly parking — pick your hours":"Short & long term available"}</div>
           <div style={{border:"1.5px solid var(--sand)",borderRadius:4,overflow:"hidden",marginBottom:12}}>
             <div style={{padding:"12px 14px",borderBottom:"1px solid var(--sand)"}}>
               <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--terra)",marginBottom:4}}>Start Date</div>
               <div style={{fontSize:"0.9rem",fontWeight:500}}>{startDate||"Select date above"}</div>
             </div>
+            {isHourlyStorage&&(
+              <div style={{padding:"12px 14px",borderBottom:"1px solid var(--sand)"}}>
+                <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--terra)",marginBottom:4}}>Start Time</div>
+                <select className="form-input" style={{border:"none",padding:"0",fontSize:"0.9rem",width:"100%"}} value={startTime} onChange={e=>setStartTime(e.target.value)}>
+                  {storageTimes.map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            )}
             <div style={{padding:"12px 14px",borderBottom:"1px solid var(--sand)"}}>
-              <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--terra)",marginBottom:8}}>Duration</div>
-              <div className="duration-toggle" style={{marginBottom:8}}>
+              <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--terra)",marginBottom:8}}>{isHourlyStorage?"Duration":"Duration"}</div>
+              {!isHourlyStorage&&<div className="duration-toggle" style={{marginBottom:8}}>
                 {(space.pricePeriod==="monthly"||!space.pricePeriod)&&<button className={`duration-btn${durationUnit==="monthly"?" active":""}`} onClick={()=>setDurationUnit("monthly")}>Monthly</button>}
                 {space.pricePeriod==="weekly"&&<button className={`duration-btn${durationUnit==="weekly"?" active":""}`} onClick={()=>setDurationUnit("weekly")}>Weekly</button>}
                 <button className={`duration-btn${durationUnit==="daily"?" active":""}`} onClick={()=>setDurationUnit("daily")}>Daily</button>
-              </div>
+              </div>}
               <select className="form-input" style={{border:"none",padding:"0",fontSize:"0.9rem",width:"100%"}} value={duration} onChange={e=>setDuration(Number(e.target.value))}>
-                {Array.from({length:durationUnit==="daily"?30:durationUnit==="weekly"?52:24},(_,i)=>i+1).map(n=><option key={n} value={n}>{n} {unitLabel}{n>1?"s":""}</option>)}
+                {isHourlyStorage
+                  ?Array.from({length:24},(_,i)=>i+1).filter(h=>h>=(space.minHours||1)).map(h=><option key={h} value={h}>{h} hour{h>1?"s":""}</option>)
+                  :Array.from({length:durationUnit==="daily"?30:durationUnit==="weekly"?52:24},(_,i)=>i+1).map(n=><option key={n} value={n}>{n} {unitLabel}{n>1?"s":""}</option>)
+                }
               </select>
+              {isHourlyStorage&&<span style={{fontSize:"0.72rem",color:"var(--stone)",marginTop:4,display:"block"}}>Min {space.minHours||1}hr · No maximum</span>}
             </div>
             <div style={{padding:"12px 14px"}}>
               <div style={{fontSize:"0.65rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--terra)",marginBottom:4}}>Vehicle Type</div>
@@ -457,7 +473,7 @@ function StorageDetail({space,user,onBack,onBook,showAuth}){
               </select>
             </div>
           </div>
-          <button className="btn btn-primary btn-block btn-lg" style={{background:"var(--blue)",boxShadow:"0 4px 16px rgba(58,122,189,0.3)",marginBottom:12}} onClick={()=>{if(!user){showAuth();return;}if(!startDate){alert("Please select a start date.");return;}onBook({date:startDate,duration,durationUnit,vehicleType,guests:1});}}>
+          <button className="btn btn-primary btn-block btn-lg" style={{background:"var(--blue)",boxShadow:"0 4px 16px rgba(58,122,189,0.3)",marginBottom:12}} onClick={()=>{if(!user){showAuth();return;}if(!startDate){alert("Please select a start date.");return;}onBook({date:startDate,startTime:isHourlyStorage?startTime:"",duration,durationUnit:isHourlyStorage?"hourly":durationUnit,vehicleType,guests:1});}}>
             {user?"Reserve This Space":"Sign In to Reserve"}
           </button>
           {startDate&&(
@@ -763,15 +779,27 @@ function ListSpaceModal({existing,user,onClose,onSave}){
             <div className="form-group">
               <label className="form-label">Pricing Period</label>
               <div className="price-type-toggle">
-                {[["monthly","📅 Monthly"],["weekly","📆 Weekly"],["daily","🗓 Daily"]].map(([val,label])=>(
+                {[["hourly","⏱ Hourly"],["daily","🗓 Daily"],["weekly","📆 Weekly"],["monthly","📅 Monthly"]].map(([val,label])=>(
                   <button key={val} type="button" className={`price-type-btn${form.pricePeriod===val?" active":""}`} onClick={()=>upd("pricePeriod",val)}>{label}</button>
                 ))}
               </div>
+              <span className="form-hint">{form.pricePeriod==="hourly"?"Great for short-term/event overflow parking — guests pick their hours.":form.pricePeriod==="daily"?"Good for short trips or weekend storage.":form.pricePeriod==="weekly"?"Good for weekly renters.":"Best for long-term storage — steady monthly income."}</span>
             </div>
-            <div className="form-group">
-              <label className="form-label">Price per {form.pricePeriod==="monthly"?"Month":form.pricePeriod==="weekly"?"Week":"Day"} (USD) *</label>
-              <input className="form-input" type="number" placeholder={form.pricePeriod==="monthly"?"150":form.pricePeriod==="weekly"?"50":"15"} value={form.price} onChange={e=>upd("price",e.target.value)}/>
-              <span className="form-hint">You keep 88% after the 12% platform fee. Average garage storage goes for $100–$300/month.</span>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Price per {form.pricePeriod==="hourly"?"Hour":form.pricePeriod==="daily"?"Day":form.pricePeriod==="weekly"?"Week":"Month"} (USD) *</label>
+                <input className="form-input" type="number" placeholder={form.pricePeriod==="hourly"?"10":form.pricePeriod==="daily"?"20":form.pricePeriod==="weekly"?"50":"150"} value={form.price} onChange={e=>upd("price",e.target.value)}/>
+                <span className="form-hint">You keep 88% after the 12% platform fee.</span>
+              </div>
+              {form.pricePeriod==="hourly"&&(
+                <div className="form-group">
+                  <label className="form-label">Minimum Hours</label>
+                  <select className="form-input" value={form.minHours} onChange={e=>upd("minHours",Number(e.target.value))}>
+                    {[1,2,3,4,5,6,12,24].map(h=><option key={h} value={h}>{h} hour{h>1?"s":""} minimum</option>)}
+                  </select>
+                  <span className="form-hint">No maximum — renter chooses duration.</span>
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">Vehicles Accepted</label>
@@ -908,7 +936,7 @@ function HostDashboard({user,showToast,onSpacesUpdate}){
                       <div style={{padding:14}}>
                         <div className="flex-between" style={{marginBottom:6}}><h3 className="serif" style={{fontSize:"1rem"}}>{l.title}</h3><span className="badge badge-blue">Active</span></div>
                         <div style={{fontSize:"0.78rem",color:"var(--stone)",marginBottom:4}}>📍 {l.location} · {l.spaces||1} space{(l.spaces||1)>1?"s":""}</div>
-                        <div style={{fontSize:"0.78rem",color:"var(--blue)",marginBottom:10}}>{fmt(l.price)}/{l.pricePeriod==="monthly"?"mo":l.pricePeriod==="weekly"?"wk":"day"}</div>
+                        <div style={{fontSize:"0.78rem",color:"var(--blue)",marginBottom:10}}>{fmt(l.price)}/{l.pricePeriod==="hourly"?"hr":l.pricePeriod==="monthly"?"mo":l.pricePeriod==="weekly"?"wk":"day"}{l.pricePeriod==="hourly"?` · Min ${l.minHours||1}hr`:""}</div>
                         <div style={{fontSize:"0.72rem",color:"var(--stone)",marginBottom:10}}>{(l.vehicleTypes||[]).slice(0,3).join(", ")}</div>
                         <div style={{display:"flex",gap:8}}><button className="btn btn-secondary btn-sm" onClick={()=>{setEditListing(l);setShowListForm(true);}}>Edit</button><button className="btn btn-danger btn-sm" onClick={async()=>{await deleteDoc(doc(db,"listings",l.id));setMyListings(prev=>prev.filter(x=>x.id!==l.id));onSpacesUpdate();showToast("Removed.","default");}}>Remove</button></div>
                       </div>
