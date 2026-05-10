@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "./firebase.js";
 import { stripePromise } from "./stripe.js";
+import { ContactPage, HelpPage, Footer } from "./ContactHelp.jsx";
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const css = `
@@ -1151,6 +1152,8 @@ export default function App() {
           ) : (
             <>
               <button className={`nav-tab${page==="browse"?" active":""}`} onClick={()=>setPage("browse")}>Browse Spaces</button>
+              <button className={`nav-tab${page==="help"?" active":""}`} onClick={()=>setPage("help")}>Help</button>
+              <button className={`nav-tab${page==="contact"?" active":""}`} onClick={()=>setPage("contact")}>Contact Us</button>
               <button className="btn btn-primary btn-sm" onClick={()=>setShowAuthModal(true)}>Sign In / Sign Up</button>
             </>
           )}
@@ -1166,6 +1169,10 @@ export default function App() {
       )}
       {page==="host-dash" && user && <HostDashboard user={user} showToast={showToast}/>}
       {page==="guest-dash" && user && <GuestDashboard user={user}/>}
+      {page==="contact" && <ContactPage showToast={showToast}/>}
+      {page==="help" && <HelpPage/>}
+
+      <Footer onNavigate={setPage}/>
 
       {/* MODALS */}
       {showAuthModal && <AuthModal onClose={()=>setShowAuthModal(false)} onAuth={handleAuth} showToast={showToast}/>}
